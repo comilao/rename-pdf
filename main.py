@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
-from langchain.chains.question_answering import load_qa_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
@@ -66,14 +66,11 @@ def extract_pdf_category(chunks: List[Document], llm: OllamaLLM) -> str:
     bank_statement, manulife_investment, utility_bill. Reply with just the category name.
     """
 
-    PROMPT = PromptTemplate(template=prompt_template, input_variables=["context"])
+    prompt = PromptTemplate(template=prompt_template, input_variables=["context"])
+    chain = create_stuff_documents_chain(llm, prompt)
+    response = chain.invoke({"context": chunks})
 
-    # Create a question-answering chain
-    chain = load_qa_chain(llm, chain_type="stuff", prompt=PROMPT)
-
-    response = chain.invoke({"input_documents": chunks})
-
-    return response["output_text"]
+    return response
 
 
 def extract_info_from_pdf(pdf_path: str, llm: OllamaLLM) -> Dict[str, str]:
@@ -149,17 +146,16 @@ def extract_info_from_pdf(pdf_path: str, llm: OllamaLLM) -> Dict[str, str]:
     Question: {question}
     """
 
-    PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
-
-    chain = load_qa_chain(llm, chain_type="stuff", prompt=PROMPT)
+    prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
+    chain = create_stuff_documents_chain(llm, prompt)
 
     # Initialize results dictionary with category
     results = {"category": category}
 
     # Ask additional questions based on document type
     for key, question in additional_questions.items():
-        response = chain.invoke({"input_documents": chunks, "question": question})
-        results[key] = response["output_text"].strip()
+        response = chain.invoke({"context": chunks, "question": question})
+        results[key] = response
 
     return results
 
