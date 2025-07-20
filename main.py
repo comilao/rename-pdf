@@ -9,6 +9,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 from langchain_ollama import OllamaLLM
+from pypdf import PdfReader, PdfWriter
 
 # Constants
 INVESTMENT_STATEMENT_TYPE = [
@@ -26,12 +27,31 @@ def get_pdf_files_in_current_dir() -> List[Path]:
         List of Path objects for PDF files.
     """
     current_dir = Path(".")
-    pdf_files = list(current_dir.glob("*.pdf"))
+    pdf_files = list(current_dir.glob("*.pdf", case_sensitive=False))
 
     if not pdf_files:
         return []
 
     return pdf_files
+
+
+def remove_passwords_from_pdfs(pdf_files: List[Path]):
+    for pdf_file in pdf_files:
+        reader = PdfReader(str(pdf_file))
+
+        if reader.is_encrypted:
+            try:
+                reader.decrypt(os.getenv("PDF_PASSWORD"))
+
+                writer = PdfWriter(clone_from=reader)
+
+                decrypted_file_path = pdf_file.with_name(pdf_file.stem + ".decrypted.pdf")
+                with open(decrypted_file_path, "wb") as decrypted_file:
+                    writer.write(decrypted_file)
+
+                pdf_file.unlink()  # Remove the original encrypted file
+            except Exception as e:
+                print(f"Failed to decrypt {pdf_file.name}: {e}")
 
 
 def get_all_subdirectories(destination_dir: Path) -> List[Path]:
@@ -375,7 +395,8 @@ def main():
         print("No PDF files found in the current directory, skipping processing.")
         return
 
-    rename_pdf_from_content(llm, pdf_files)
+    remove_passwords_from_pdfs(pdf_files)
+    rename_pdf_from_content(llm, get_pdf_files_in_current_dir())
 
     subdirs = get_all_subdirectories(destination_dir)
     renamed_pdf_files = get_pdf_files_in_current_dir()
