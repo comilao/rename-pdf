@@ -45,7 +45,7 @@ def remove_passwords_from_pdfs(pdf_files: List[Path]):
 
                 writer = PdfWriter(clone_from=reader)
 
-                decrypted_file_path = pdf_file.with_suffix(".decrypted.pdf")
+                decrypted_file_path = pdf_file.with_name(pdf_file.stem + ".decrypted.pdf")
                 with open(decrypted_file_path, "wb") as decrypted_file:
                     writer.write(decrypted_file)
 
@@ -396,8 +396,7 @@ def main():
         return
 
     remove_passwords_from_pdfs(pdf_files)
-
-    rename_pdf_from_content(llm, pdf_files)
+    rename_pdf_from_content(llm, get_pdf_files_in_current_dir())
 
     subdirs = get_all_subdirectories(destination_dir)
     renamed_pdf_files = get_pdf_files_in_current_dir()
