@@ -114,7 +114,7 @@ def extract_info_from_pdf(pdf_path: str, llm: OllamaLLM) -> Dict[str, str]:
                 "Reply one of the following: "
                 f"{os.getenv('FINANCIAL_INSTITUTIONS')}"
             ),
-            "month": ("What is the statement month? Reply in YYYYMM format " "(e.g., 202305)."),
+            "month": ("What is the statement month? Reply in YYYYMM format (e.g., 202305)."),
         }
     elif category == "manulife_investment":
         additional_questions = {
@@ -128,7 +128,10 @@ def extract_info_from_pdf(pdf_path: str, llm: OllamaLLM) -> Dict[str, str]:
                 "Reply with just the number (no currency symbol)."
             ),
             "month": (
-                "What is the statement month or letter month? Reply in YYYYMM format "
+                "What is the statement month? Reply in YYYYMM format."
+                "For Dividend Letter only, reply with the ex-date in YYYYMM format."
+                "For Monthly Statement of Account, reply with the statement month in YYYYMM format."
+                "For Notice of Payment, reply with letter month in YYYYMM format."
                 "(e.g., 202305)."
             ),
         }
@@ -141,6 +144,7 @@ def extract_info_from_pdf(pdf_path: str, llm: OllamaLLM) -> Dict[str, str]:
             ),
             "month": (
                 "What is the month of the bill? Reply with just the month in YYYYMM format "
+                "Reply with the bill date in YYYYMM format"
                 "(e.g., 202305)."
             ),
             "amount": (
@@ -198,7 +202,7 @@ def generate_filename(info: Dict[str, str], original_file: str) -> str:
 
     # Generate filename based on category
     if category == "bank_statement":
-        return f"{info["month"]}_{info["institution"]}{extension}"
+        return f"{info['month']}_{info['institution']}{extension}"
     elif category == "manulife_investment":
         if info["statement_type"] == "Monthly Statement":
             return f"{info['month']}_{info['statement_type'].replace(' ', '')}{extension}"  # noqa: E501
