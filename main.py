@@ -111,10 +111,10 @@ def extract_info_from_pdf(pdf_path: str, llm: OllamaLLM) -> Dict[str, str]:
         additional_questions = {
             "institution": (
                 "What is the name of the company or institution that issued this document? "
-                "Reply one of the following: "
+                "Just reply one of the following: "
                 f"{os.getenv('FINANCIAL_INSTITUTIONS')}"
             ),
-            "month": ("What is the statement month? Reply in YYYYMM format (e.g., 202305)."),
+            "month": ("What is the statement month? Just reply in YYYYMM format (e.g., 202305)."),
         }
     elif category == "manulife_investment":
         additional_questions = {
